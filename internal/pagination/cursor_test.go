@@ -280,8 +280,8 @@ func TestCursorPaginator_CreatePaginationResult_BackwardWithMoreItems(t *testing
 	assert.Equal(t, totalCount, result.TotalCount)
 
 	// Items should be reversed for backward pagination
-	assert.Equal(t, "10", result.Items[0].GetId()) // First item after reversal
-	assert.Equal(t, "19", result.Items[9].GetId()) // Last item after reversal
+	assert.Equal(t, "10", result.Items[0].GetID()) // First item after reversal
+	assert.Equal(t, "19", result.Items[9].GetID()) // Last item after reversal
 
 	// Check previous link (should exist for backward pagination)
 	assert.NotNil(t, result.Previous)

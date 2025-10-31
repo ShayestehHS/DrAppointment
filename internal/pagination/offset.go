@@ -6,58 +6,61 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/shayesteh1hs/DrAppointment/internal/domain"
-
+	"github.com/gin-gonic/gin"
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/shayesteh1hs/DrAppointment/internal/api"
+	"github.com/shayesteh1hs/DrAppointment/internal/utils"
 )
 
 type LimitOffsetParams struct {
-	Page      int    `form:"page,default=1" binding:"min=1"`
-	Limit     int    `form:"limit,default=10" binding:"min=1,max=100"`
-	BaseURL   string `form:"-"`
-	validated bool
+	Page    int    `form:"page,default=1" binding:"min=1"`
+	Limit   int    `form:"limit,default=10" binding:"min=1,max=100"`
+	BaseURL string `form:"-"`
 }
 
 func (p *LimitOffsetParams) Validate() error {
-	if p.BaseURL == "" {
-		return errors.New("base url is required")
+	if err := validateBaseURL(p.BaseURL); err != nil {
+		return err
 	}
 
-	p.validated = true
 	return nil
 }
 
-func (p *LimitOffsetParams) IsValidated() bool {
-	return p.validated
+func (p *LimitOffsetParams) GetOffset() int {
+	return p.Limit * (p.Page - 1)
 }
 
-type LimitOffsetPaginator[T domain.ModelEntity] struct {
+type LimitOffsetPaginator[T api.PageEntityDTO] struct {
 	params LimitOffsetParams
 }
 
-func NewLimitOffsetPaginator[T domain.ModelEntity](params LimitOffsetParams) *LimitOffsetPaginator[T] {
+func NewLimitOffsetPaginator[T api.PageEntityDTO](params LimitOffsetParams) *LimitOffsetPaginator[T] {
 	return &LimitOffsetPaginator[T]{params: params}
 }
 
-func (p *LimitOffsetPaginator[T]) getOffset() int {
-	return p.params.Limit * (p.params.Page - 1)
+func NewOffsetPaginator[T api.PageEntityDTO]() *LimitOffsetPaginator[T] {
+	return &LimitOffsetPaginator[T]{params: LimitOffsetParams{}}
+}
+
+func (p *LimitOffsetPaginator[T]) GetParams() LimitOffsetParams {
+	return p.params
 }
 
 func (p *LimitOffsetPaginator[T]) Paginate(sb *sqlbuilder.SelectBuilder) error {
-	if !p.params.IsValidated() {
-		return errors.New("params should be validated before paginating")
-	}
-
 	sb.Limit(p.params.Limit)
-	sb.Offset(p.getOffset())
-
+	sb.Offset(p.params.GetOffset())
 	return nil
 }
 
-func (p *LimitOffsetPaginator[T]) CreatePaginationResult(items []T, totalCount int) (*Result[T], error) {
-	if !p.params.IsValidated() {
-		return nil, errors.New("params should be validated before paginating")
+func (p *LimitOffsetPaginator[T]) BindQueryParam(c *gin.Context) error {
+	if err := c.ShouldBindQuery(&p.params); err != nil {
+		return fmt.Errorf("invalid pagination parameters: %w", err)
 	}
+	p.params.BaseURL = utils.BuildBaseURL(c)
+	return p.params.Validate()
+}
+
+func (p *LimitOffsetPaginator[T]) CreatePaginationResult(items []T, totalCount int) (*Result[T], error) {
 	result := &Result[T]{
 		Items:      items,
 		TotalCount: totalCount,

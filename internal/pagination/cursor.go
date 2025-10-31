@@ -8,9 +8,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/shayesteh1hs/DrAppointment/internal/domain"
-
+	"github.com/gin-gonic/gin"
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/shayesteh1hs/DrAppointment/internal/api"
+	"github.com/shayesteh1hs/DrAppointment/internal/utils"
 )
 
 type CursorParams struct {
@@ -49,12 +50,24 @@ func (p *CursorParams) IsValidated() bool {
 	return p.validated
 }
 
-type CursorPaginator[T domain.ModelEntity] struct {
+func (p *CursorParams) BindQueryParam(c *gin.Context) error {
+	if err := c.ShouldBindQuery(p); err != nil {
+		return fmt.Errorf("invalid cursor parameters: %w", err)
+	}
+	p.BaseURL = utils.BuildBaseURL(c)
+	return p.Validate()
+}
+
+type CursorPaginator[T api.PageEntityDTO] struct {
 	params CursorParams
 }
 
-func NewCursorPaginator[T domain.ModelEntity](params CursorParams) *CursorPaginator[T] {
+func NewCursorPaginator[T api.PageEntityDTO](params CursorParams) *CursorPaginator[T] {
 	return &CursorPaginator[T]{params: params}
+}
+
+func (p *CursorPaginator[T]) BindQueryParam(c *gin.Context) error {
+	return p.params.BindQueryParam(c)
 }
 
 func (p *CursorPaginator[T]) Paginate(sb *sqlbuilder.SelectBuilder) error {
@@ -116,8 +129,8 @@ func (p *CursorPaginator[T]) CreatePaginationResult(items []T, totalCount int) (
 	firstItem := result.Items[0]
 	lastItem := result.Items[len(result.Items)-1]
 
-	firstID := firstItem.GetId()
-	lastID := lastItem.GetId()
+	firstID := firstItem.GetID()
+	lastID := lastItem.GetID()
 
 	// Generate previous link (backward pagination from first item)
 	if p.params.Cursor != "" || p.params.IsBackward() {

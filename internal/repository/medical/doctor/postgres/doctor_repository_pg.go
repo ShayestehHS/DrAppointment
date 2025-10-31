@@ -1,4 +1,4 @@
-package medical
+package postgres
 
 import (
 	"context"
@@ -10,35 +10,28 @@ import (
 	"github.com/google/uuid"
 	"github.com/huandu/go-sqlbuilder"
 
-	domain "github.com/shayesteh1hs/DrAppointment/internal/domain/medical"
+	"github.com/shayesteh1hs/DrAppointment/internal/entity/medical"
 	filter "github.com/shayesteh1hs/DrAppointment/internal/filter/medical"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor"
 )
-
-type DoctorRepository interface {
-	GetAllPaginated(ctx context.Context, filters filter.DoctorQueryParam, paginator *pagination.LimitOffsetPaginator[domain.Doctor]) ([]domain.Doctor, error)
-	Count(ctx context.Context, filters filter.DoctorQueryParam) (int, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Doctor, error)
-}
 
 type doctorRepository struct {
 	db *sql.DB
 }
 
-func (r *doctorRepository) GetAllPaginated(ctx context.Context, filters filter.DoctorQueryParam, paginator *pagination.LimitOffsetPaginator[domain.Doctor]) ([]domain.Doctor, error) {
+func (r *doctorRepository) ListOffset(ctx context.Context, filters filter.DoctorQueryParam, params pagination.LimitOffsetParams) ([]medical.Doctor, error) {
 	sb := sqlbuilder.PostgreSQL.NewSelectBuilder()
 	sb.Select("id", "name", "specialty_id", "phone_number", "avatar_url", "description", "created_at", "updated_at")
 	sb.From("doctors")
 	sb = filters.Apply(sb)
-
-	if err := paginator.Paginate(sb); err != nil {
-		return nil, err
-	}
+	sb.Limit(params.Limit)
+	sb.Offset(params.GetOffset())
 
 	query, args := sb.Build()
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return []medical.Doctor{}, err
 	}
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
@@ -49,7 +42,7 @@ func (r *doctorRepository) GetAllPaginated(ctx context.Context, filters filter.D
 
 	doctors, err := r.scanDoctors(rows)
 	if err != nil {
-		return nil, err
+		return []medical.Doctor{}, err
 	}
 
 	return doctors, nil
@@ -70,7 +63,7 @@ func (r *doctorRepository) Count(ctx context.Context, filters filter.DoctorQuery
 	return totalCount, nil
 }
 
-func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Doctor, error) {
+func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*medical.Doctor, error) {
 	sb := sqlbuilder.PostgreSQL.NewSelectBuilder()
 	sb.Select("id", "name", "specialty_id", "phone_number", "avatar_url", "description", "created_at", "updated_at")
 	sb.From("doctors")
@@ -79,7 +72,7 @@ func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.D
 	query, args := sb.Build()
 	row := r.db.QueryRowContext(ctx, query, args...)
 
-	var doc domain.Doctor
+	var doc medical.Doctor
 	err := row.Scan(
 		&doc.ID,
 		&doc.Name,
@@ -100,10 +93,10 @@ func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.D
 	return &doc, nil
 }
 
-func (r *doctorRepository) scanDoctors(rows *sql.Rows) ([]domain.Doctor, error) {
-	var doctors []domain.Doctor
+func (r *doctorRepository) scanDoctors(rows *sql.Rows) ([]medical.Doctor, error) {
+	var doctors []medical.Doctor
 	for rows.Next() {
-		var doc domain.Doctor
+		var doc medical.Doctor
 		err := rows.Scan(
 			&doc.ID,
 			&doc.Name,
@@ -127,6 +120,6 @@ func (r *doctorRepository) scanDoctors(rows *sql.Rows) ([]domain.Doctor, error) 
 	return doctors, nil
 }
 
-func NewDoctorRepository(db *sql.DB) DoctorRepository {
+func NewDoctorRepository(db *sql.DB) doctor.Repository {
 	return &doctorRepository{db: db}
 }
