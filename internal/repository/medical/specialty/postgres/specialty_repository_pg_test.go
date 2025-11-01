@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/specialty"
 )
 
 func setupMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
@@ -235,10 +237,10 @@ func TestSpecialtyPostgresRepository_GetByID_NotFound(t *testing.T) {
 		WithArgs(specialtyID).
 		WillReturnError(sql.ErrNoRows)
 
-	specialty, err := repo.GetByID(ctx, specialtyID)
+	spec, err := repo.GetByID(ctx, specialtyID)
 	require.Error(t, err)
-	assert.Nil(t, specialty)
-	assert.Contains(t, err.Error(), "specialty not found")
+	assert.Nil(t, spec)
+	assert.True(t, errors.Is(err, specialty.ErrSpecialtyNotFound))
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }

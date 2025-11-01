@@ -5,7 +5,6 @@ package memory
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -60,7 +59,7 @@ func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*medical.
 			return &doc, nil
 		}
 	}
-	return nil, fmt.Errorf("doctor not found: %s", id)
+	return nil, doctor.ErrDoctorNotFound
 }
 
 func (r *doctorRepository) Count(ctx context.Context, filters filter.DoctorQueryParam) (int, error) {

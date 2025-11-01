@@ -80,7 +80,7 @@ func (r *specialtyRepository) GetByID(ctx context.Context, id uuid.UUID) (*medic
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("specialty not found: %s", id)
+			return nil, specialty.ErrSpecialtyNotFound
 		}
 		return nil, fmt.Errorf("failed to scan specialty: %w", err)
 	}

@@ -5,6 +5,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -167,7 +168,7 @@ func TestSpecialtyMemoryRepository_GetByID_NotFound(t *testing.T) {
 	specialty, err := repo.GetByID(ctx, nonExistentID)
 	require.Error(t, err)
 	assert.Nil(t, specialty)
-	assert.Contains(t, err.Error(), "specialty not found")
+	assert.True(t, errors.Is(err, specialty.ErrSpecialtyNotFound))
 }
 
 func TestSpecialtyMemoryRepository_AddSpecialty(t *testing.T) {

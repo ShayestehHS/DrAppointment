@@ -61,7 +61,7 @@ func (r *specialtyRepository) GetByID(ctx context.Context, id uuid.UUID) (*medic
 			return &spec, nil
 		}
 	}
-	return nil, fmt.Errorf("specialty not found: %s", id)
+	return nil, specialty.ErrSpecialtyNotFound
 }
 
 func (r *specialtyRepository) Count(ctx context.Context) (int, error) {

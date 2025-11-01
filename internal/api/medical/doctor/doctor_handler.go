@@ -1,6 +1,7 @@
 package doctor
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	medicalFilter "github.com/shayesteh1hs/DrAppointment/internal/filter/medical"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor"
 	medicalService "github.com/shayesteh1hs/DrAppointment/internal/service/medical/doctor"
 )
 
@@ -64,14 +66,18 @@ func (h *Handler) GetDoctorByID(c *gin.Context) {
 		return
 	}
 
-	doctor, err := h.service.GetByID(c.Request.Context(), id)
+	doc, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
+		if errors.Is(err, doctor.ErrDoctorNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
+			return
+		}
 		log.Printf("failed to fetch doctor by ID: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch doctor"})
 		return
 	}
 
-	response := NewDetailDTO(*doctor)
+	response := NewDetailDTO(*doc)
 	c.JSON(http.StatusOK, response)
 }
 

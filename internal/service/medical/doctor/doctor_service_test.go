@@ -5,6 +5,7 @@ package doctor
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 
 	filter "github.com/shayesteh1hs/DrAppointment/internal/filter/medical"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor"
 	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor/memory"
 )
 
@@ -176,8 +178,8 @@ func TestDoctorService_GetByID_NotFound(t *testing.T) {
 
 	nonExistentID := uuid.New()
 
-	doctor, err := service.GetByID(ctx, nonExistentID)
+	doc, err := service.GetByID(ctx, nonExistentID)
 	require.Error(t, err)
-	assert.Nil(t, doctor)
-	assert.Contains(t, err.Error(), "doctor not found")
+	assert.Nil(t, doc)
+	assert.True(t, errors.Is(err, doctor.ErrDoctorNotFound))
 }

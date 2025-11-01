@@ -5,6 +5,7 @@ package specialty
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -151,5 +152,5 @@ func TestSpecialtyService_GetByID_NotFound(t *testing.T) {
 	specialty, err := service.GetByID(ctx, nonExistentID)
 	require.Error(t, err)
 	assert.Nil(t, specialty)
-	assert.Contains(t, err.Error(), "specialty not found")
+	assert.True(t, errors.Is(err, specialty.ErrSpecialtyNotFound))
 }

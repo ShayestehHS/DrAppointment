@@ -5,6 +5,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/shayesteh1hs/DrAppointment/internal/entity/medical"
 	filter "github.com/shayesteh1hs/DrAppointment/internal/filter/medical"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor"
 )
 
 func setupDoctorMemoryRepo() *doctorRepository {
@@ -190,10 +192,10 @@ func TestDoctorMemoryRepository_GetByID_NotFound(t *testing.T) {
 
 	nonExistentID := uuid.New()
 
-	doctor, err := repo.GetByID(ctx, nonExistentID)
+	doc, err := repo.GetByID(ctx, nonExistentID)
 	require.Error(t, err)
-	assert.Nil(t, doctor)
-	assert.Contains(t, err.Error(), "doctor not found")
+	assert.Nil(t, doc)
+	assert.True(t, errors.Is(err, doctor.ErrDoctorNotFound))
 }
 
 func TestDoctorMemoryRepository_AddDoctor(t *testing.T) {

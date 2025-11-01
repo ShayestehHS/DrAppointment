@@ -1,12 +1,14 @@
 package specialty
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/specialty"
 	medicalService "github.com/shayesteh1hs/DrAppointment/internal/service/medical/specialty"
 )
 
@@ -53,14 +55,18 @@ func (h *SpecialtyHandler) GetSpecialtyByID(c *gin.Context) {
 		return
 	}
 
-	specialty, err := h.service.GetByID(c.Request.Context(), id)
+	spec, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
+		if errors.Is(err, specialty.ErrSpecialtyNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Specialty not found"})
+			return
+		}
 		log.Printf("failed to fetch specialty by ID: %v", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Specialty not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch specialty"})
 		return
 	}
 
-	response := NewDetailDTO(*specialty)
+	response := NewDetailDTO(*spec)
 	c.JSON(http.StatusOK, response)
 }
 

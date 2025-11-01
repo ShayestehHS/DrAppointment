@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 	filter "github.com/shayesteh1hs/DrAppointment/internal/filter/medical"
 	"github.com/shayesteh1hs/DrAppointment/internal/pagination"
+	"github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor"
 )
 
 func setupMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
@@ -221,10 +223,10 @@ func TestDoctorPostgresRepository_GetByID_NotFound(t *testing.T) {
 		WithArgs(doctorID).
 		WillReturnError(sql.ErrNoRows)
 
-	doctor, err := repo.GetByID(ctx, doctorID)
+	doc, err := repo.GetByID(ctx, doctorID)
 	require.Error(t, err)
-	assert.Nil(t, doctor)
-	assert.Contains(t, err.Error(), "doctor not found")
+	assert.Nil(t, doc)
+	assert.True(t, errors.Is(err, doctor.ErrDoctorNotFound))
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
