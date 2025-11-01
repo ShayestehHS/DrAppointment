@@ -19,7 +19,7 @@ func (p ListItemDTO) IsPageEntityDTO() bool { return true }
 func (p ListItemDTO) GetID() string         { return p.ID.String() }
 
 func NewListItemDTO(specialties []medical.Specialty) []ListItemDTO {
-	var items []ListItemDTO
+	items := make([]ListItemDTO, 0, len(specialties))
 	for _, specialty := range specialties {
 		dto := ListItemDTO{
 			ID:   specialty.ID,

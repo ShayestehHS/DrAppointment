@@ -18,7 +18,7 @@ type ListItemDTO struct {
 }
 
 func newListItemDTO(doctors []medical.Doctor) []ListItemDTO {
-	var items []ListItemDTO
+	items := make([]ListItemDTO, 0, len(doctors))
 
 	for _, doctor := range doctors {
 		items = append(items, ListItemDTO{
