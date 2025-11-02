@@ -21,7 +21,6 @@ func TestCursorParams_Validate_ValidParams(t *testing.T) {
 	err := params.Validate()
 
 	assert.Nil(t, err)
-	assert.True(t, params.IsValidated())
 }
 
 func TestCursorParams_Validate_ValidParamsWithCursor(t *testing.T) {
@@ -36,7 +35,6 @@ func TestCursorParams_Validate_ValidParamsWithCursor(t *testing.T) {
 	err := params.Validate()
 
 	assert.Nil(t, err)
-	assert.True(t, params.IsValidated())
 }
 
 func TestCursorParams_Validate_InvalidOrdering(t *testing.T) {
@@ -51,7 +49,6 @@ func TestCursorParams_Validate_InvalidOrdering(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "ordering must be either 'asc' or 'desc'")
-	assert.False(t, params.IsValidated())
 }
 
 func TestCursorParams_Validate_InvalidCursor(t *testing.T) {
@@ -66,7 +63,6 @@ func TestCursorParams_Validate_InvalidCursor(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid cursor")
-	assert.False(t, params.IsValidated())
 }
 
 func TestCursorParams_Validate_CaseInsensitiveOrdering(t *testing.T) {
@@ -81,7 +77,6 @@ func TestCursorParams_Validate_CaseInsensitiveOrdering(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "asc", params.Ordering)
-	assert.True(t, params.IsValidated())
 }
 
 func TestCursorParams_IsForward(t *testing.T) {
@@ -190,26 +185,6 @@ func TestCursorPaginator_Paginate_BackwardWithCursor(t *testing.T) {
 	assert.Equal(t, params.Limit+1, args[1])
 }
 
-func TestCursorPaginator_Paginate_WithoutValidation(t *testing.T) {
-	params := CursorParams{
-		Cursor:   "",
-		Ordering: "asc",
-		Limit:    10,
-		BaseURL:  "http://example.com/api",
-	}
-
-	// Do not validate the params
-
-	paginator := NewCursorPaginator[mockEntity](params)
-	sb := sqlbuilder.PostgreSQL.NewSelectBuilder()
-	sb.Select("*").From("test")
-
-	err := paginator.Paginate(sb)
-
-	assert.Error(t, err)
-	assert.Equal(t, "params should be validated before paginating", err.Error())
-}
-
 func TestCursorPaginator_CreatePaginationResult_ForwardWithMoreItems(t *testing.T) {
 	baseURL := "http://example.com/api"
 	params := CursorParams{
@@ -245,8 +220,7 @@ func TestCursorPaginator_CreatePaginationResult_ForwardWithMoreItems(t *testing.
 	assert.NoError(t, err)
 
 	// Decode the cursor to verify it's the last item's ID
-	cursor := nextURL.Query().Get("cursor")
-	decodedCursor, err := decodeCursor(cursor)
+	decodedCursor, err := decodeCursor(nextURL.Query().Get("cursor"))
 	assert.NoError(t, err)
 	assert.Equal(t, "9", decodedCursor) // Last item ID (0-indexed)
 	assert.Equal(t, "asc", nextURL.Query().Get("ordering"))
@@ -359,32 +333,17 @@ func TestCursorPaginator_CreatePaginationResult_EmptyItems(t *testing.T) {
 	assert.Nil(t, result.Next)
 }
 
-func TestCursorPaginator_CreatePaginationResult_WithoutValidation(t *testing.T) {
-	params := CursorParams{
-		Cursor:   "",
-		Ordering: "asc",
-		Limit:    10,
-		BaseURL:  "http://example.com/api",
-	}
-
-	// Do not validate the params
-	items := generateMockItems(10)
-	totalCount := 25
-
-	paginator := NewCursorPaginator[mockEntity](params)
-	result, resultErr := paginator.CreatePaginationResult(items, totalCount)
-
-	assert.Error(t, resultErr)
-	assert.Equal(t, "params should be validated before paginating", resultErr.Error())
-	assert.Nil(t, result)
-}
-
 func TestCursorPaginator_BuildURL_WithExistingQueryParams(t *testing.T) {
+	cp := url.Values{}
+	cp.Add("limit", "10")
+	cp.Add("ordering", "asc")
+	cp.Add("filter", "test")
 	params := CursorParams{
-		Cursor:   "",
-		Ordering: "asc",
-		Limit:    10,
-		BaseURL:  "http://example.com/api?filter=test",
+		Cursor:       "",
+		Ordering:     "asc",
+		Limit:        10,
+		BaseURL:      "http://example.com/api",
+		ClientParams: cp,
 	}
 
 	_ = params.Validate()

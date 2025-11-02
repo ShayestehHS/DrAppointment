@@ -14,12 +14,14 @@ import (
 	"github.com/shayesteh1hs/DrAppointment/internal/utils"
 )
 
+var _ Params = (*CursorParams)(nil)
+
 type CursorParams struct {
-	Cursor    string `form:"cursor"`
-	Ordering  string `form:"ordering,default=asc"`
-	Limit     int    `form:"limit,default=10" binding:"min=1,max=100"`
-	BaseURL   string `form:"-"`
-	validated bool
+	Cursor       string     `form:"cursor"`
+	Ordering     string     `form:"ordering,default=asc"`
+	Limit        int        `form:"limit,default=10" binding:"min=1,max=100"`
+	BaseURL      string     `form:"-"`
+	ClientParams url.Values `form:"-"`
 }
 
 func (p *CursorParams) Validate() error {
@@ -34,7 +36,6 @@ func (p *CursorParams) Validate() error {
 		}
 	}
 
-	p.validated = true
 	return nil
 }
 
@@ -46,14 +47,16 @@ func (p *CursorParams) IsBackward() bool {
 	return p.Ordering == "desc"
 }
 
-func (p *CursorParams) IsValidated() bool {
-	return p.validated
-}
-
 func (p *CursorParams) BindQueryParam(c *gin.Context) error {
 	if err := c.ShouldBindQuery(p); err != nil {
 		return fmt.Errorf("invalid cursor parameters: %w", err)
 	}
+
+	p.ClientParams = c.Request.URL.Query()
+	p.ClientParams.Del("cursor")
+	p.ClientParams.Del("ordering")
+	p.ClientParams.Del("limit")
+
 	p.BaseURL = utils.BuildBaseURL(c)
 	return p.Validate()
 }
@@ -71,10 +74,6 @@ func (p *CursorPaginator[T]) BindQueryParam(c *gin.Context) error {
 }
 
 func (p *CursorPaginator[T]) Paginate(sb *sqlbuilder.SelectBuilder) error {
-	if !p.params.IsValidated() {
-		return errors.New("params should be validated before paginating")
-	}
-
 	// Fetch one extra item to determine if there's a next/previous page
 	sb.Limit(p.params.Limit + 1)
 
@@ -101,10 +100,6 @@ func (p *CursorPaginator[T]) Paginate(sb *sqlbuilder.SelectBuilder) error {
 }
 
 func (p *CursorPaginator[T]) CreatePaginationResult(items []T, totalCount int) (*Result[T], error) {
-	if !p.params.IsValidated() {
-		return nil, errors.New("params should be validated before paginating")
-	}
-
 	result := &Result[T]{
 		Items:      items,
 		TotalCount: totalCount,
@@ -166,7 +161,10 @@ func (p *CursorPaginator[T]) buildURL(id string, ordering string) (string, error
 	}
 
 	cursor := encodeCursor(id)
-	params := u.Query()
+	params := p.params.ClientParams
+	if params == nil {
+		params = url.Values{}
+	}
 	params.Set("cursor", cursor)
 	params.Set("ordering", ordering)
 	params.Set("limit", fmt.Sprintf("%d", p.params.Limit))
