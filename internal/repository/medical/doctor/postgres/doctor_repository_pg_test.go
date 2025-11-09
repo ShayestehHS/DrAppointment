@@ -156,7 +156,7 @@ func TestDoctorPostgresRepository_ListOffset_EmptyResult(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestDoctorPostgresRepository_ListOffset_CountError(t *testing.T) {
+func TestDoctorPostgresRepository_ListOffset_SelectError(t *testing.T) {
 	db, mock := setupMockDB(t)
 	defer db.Close()
 

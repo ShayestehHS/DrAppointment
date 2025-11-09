@@ -10,18 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockEntity struct {
-	ID string
-}
-
-func (m mockEntity) GetID() string {
-	return m.ID
-}
-
-func (m mockEntity) IsPageEntityDTO() bool {
-	return true
-}
-
 func TestLimitOffsetParams_Validate_ValidParams(t *testing.T) {
 	params := LimitOffsetParams{
 		Page:    1,
@@ -242,12 +230,4 @@ func TestBuildURL_EmptyURL(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Empty(t, result)
-}
-
-func generateMockItems(count int) []mockEntity {
-	items := make([]mockEntity, count)
-	for i := 0; i < count; i++ {
-		items[i] = mockEntity{ID: strconv.Itoa(i)}
-	}
-	return items
 }

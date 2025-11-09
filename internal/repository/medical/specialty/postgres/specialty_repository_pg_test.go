@@ -123,26 +123,20 @@ func TestSpecialtyPostgresRepository_ListOffset_EmptyResult(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestSpecialtyPostgresRepository_ListOffset_CountError(t *testing.T) {
+func TestSpecialtyPostgresRepository_Count_Error(t *testing.T) {
 	db, mock := setupMockDB(t)
 	defer db.Close()
 
 	repo := NewSpecialtyRepository(db)
 	ctx := context.Background()
 
-	params := pagination.LimitOffsetParams{
-		Page:  1,
-		Limit: 10,
-	}
-
-	// Mock select query with error
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, name, image_path, created_at, updated_at FROM specialties LIMIT $1 OFFSET $2")).
-		WithArgs(10, 0).
+	// Mock count query with error
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM specialties")).
 		WillReturnError(sql.ErrConnDone)
 
-	result, err := repo.ListOffset(ctx, params)
+	count, err := repo.Count(ctx)
 	require.Error(t, err)
-	assert.Len(t, result, 0)
+	assert.Equal(t, 0, count)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }

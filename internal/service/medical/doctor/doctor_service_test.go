@@ -100,7 +100,7 @@ func TestDoctorService_ListDoctorsOffset_ValidatesLimitTooHigh(t *testing.T) {
 	assert.Len(t, doctors, 2)
 }
 
-func TestDoctorService_ListDoctorsOffset_ValidatesNegativeOffset(t *testing.T) {
+func TestDoctorService_ListDoctorsOffset_Success_FirstPage(t *testing.T) {
 	service := setupDoctorService()
 	ctx := context.Background()
 

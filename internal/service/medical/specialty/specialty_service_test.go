@@ -111,7 +111,7 @@ func TestSpecialtyService_ListSpecialtiesOffset_ValidatesLimitTooHigh(t *testing
 	assert.Len(t, specialties, 3)
 }
 
-func TestSpecialtyService_ListSpecialtiesOffset_ValidatesNegativeOffset(t *testing.T) {
+func TestSpecialtyService_ListSpecialtiesOffset_Success_FirstPage(t *testing.T) {
 	service := setupSpecialtyService()
 	ctx := context.Background()
 

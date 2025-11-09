@@ -12,10 +12,13 @@ import (
 	"github.com/shayesteh1hs/DrAppointment/internal/utils"
 )
 
+var _ Params = (*LimitOffsetParams)(nil)
+
 type LimitOffsetParams struct {
-	Page    int    `form:"page,default=1" binding:"min=1"`
-	Limit   int    `form:"limit,default=10" binding:"min=1,max=100"`
-	BaseURL string `form:"-"`
+	Page         int        `form:"page,default=1" binding:"min=1"`
+	Limit        int        `form:"limit,default=10" binding:"min=1,max=100"`
+	BaseURL      string     `form:"-"`
+	ClientParams url.Values `form:"-"`
 }
 
 func (p *LimitOffsetParams) Validate() error {
@@ -28,6 +31,19 @@ func (p *LimitOffsetParams) Validate() error {
 
 func (p *LimitOffsetParams) GetOffset() int {
 	return p.Limit * (p.Page - 1)
+}
+
+func (p *LimitOffsetParams) BindQueryParam(c *gin.Context) error {
+	if err := c.ShouldBindQuery(p); err != nil {
+		return fmt.Errorf("invalid cursor parameters: %w", err)
+	}
+
+	p.ClientParams = c.Request.URL.Query()
+	p.ClientParams.Del("page")
+	p.ClientParams.Del("limit")
+
+	p.BaseURL = utils.BuildBaseURL(c)
+	return p.Validate()
 }
 
 type LimitOffsetPaginator[T api.PageEntityDTO] struct {
@@ -53,11 +69,7 @@ func (p *LimitOffsetPaginator[T]) Paginate(sb *sqlbuilder.SelectBuilder) error {
 }
 
 func (p *LimitOffsetPaginator[T]) BindQueryParam(c *gin.Context) error {
-	if err := c.ShouldBindQuery(&p.params); err != nil {
-		return fmt.Errorf("invalid pagination parameters: %w", err)
-	}
-	p.params.BaseURL = utils.BuildBaseURL(c)
-	return p.params.Validate()
+	return p.params.BindQueryParam(c)
 }
 
 func (p *LimitOffsetPaginator[T]) CreatePaginationResult(items []T, totalCount int) (*Result[T], error) {
@@ -101,7 +113,11 @@ func (p *LimitOffsetPaginator[T]) buildURL(page int) (string, error) {
 		return "", errors.New("failed to parse base url")
 	}
 
-	params := u.Query()
+	params := p.params.ClientParams
+	if params == nil {
+		// If ClientParams is nil, extract query parameters from the parsed URL
+		params = u.Query()
+	}
 	params.Set("page", fmt.Sprintf("%d", page))
 	params.Set("limit", fmt.Sprintf("%d", p.params.Limit))
 
