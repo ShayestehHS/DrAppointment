@@ -54,9 +54,9 @@ func (r *doctorRepository) ListOffset(ctx context.Context, filters filter.Doctor
 }
 
 func (r *doctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*medical.Doctor, error) {
-	for _, doc := range r.doctors {
-		if doc.ID == id {
-			return &doc, nil
+	for i := range r.doctors {
+		if r.doctors[i].ID == id {
+			return &r.doctors[i], nil
 		}
 	}
 	return nil, doctor.ErrDoctorNotFound
