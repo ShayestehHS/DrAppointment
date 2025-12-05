@@ -52,7 +52,7 @@ func (r *doctorRepository) Count(ctx context.Context, filters filter.DoctorQuery
 	sb := sqlbuilder.PostgreSQL.NewSelectBuilder()
 	sb.Select("count(*)")
 	sb.From("doctors")
-	filters.Apply(sb)
+	sb = filters.Apply(sb)
 
 	query, args := sb.Build()
 	var totalCount int
