@@ -7,7 +7,6 @@ import (
 	"context"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/shayesteh1hs/DrAppointment/internal/entity/medical"
@@ -104,27 +103,6 @@ func (r *doctorRepository) Clear() {
 
 func NewDoctorRepository() doctor.Repository {
 	return &doctorRepository{
-		doctors: []medical.Doctor{
-			{
-				ID:          uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
-				Name:        "Dr. John Smith",
-				SpecialtyID: uuid.MustParse("223e4567-e89b-12d3-a456-426614174000"),
-				PhoneNumber: "+1234567890",
-				AvatarURL:   "https://example.com/avatar1.jpg",
-				Description: "Experienced cardiologist",
-				CreatedAt:   time.Now().Add(-24 * time.Hour),
-				UpdatedAt:   time.Now().Add(-24 * time.Hour),
-			},
-			{
-				ID:          uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"),
-				Name:        "Dr. Jane Doe",
-				SpecialtyID: uuid.MustParse("223e4567-e89b-12d3-a456-426614174001"),
-				PhoneNumber: "+1234567891",
-				AvatarURL:   "https://example.com/avatar2.jpg",
-				Description: "Skilled neurologist",
-				CreatedAt:   time.Now().Add(-12 * time.Hour),
-				UpdatedAt:   time.Now().Add(-12 * time.Hour),
-			},
-		},
+		doctors: []medical.Doctor{},
 	}
 }

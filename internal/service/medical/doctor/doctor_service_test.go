@@ -19,7 +19,7 @@ import (
 )
 
 func setupDoctorService() Service {
-	repo := memory.NewDoctorRepository()
+	repo := memory.NewDoctorRepositoryWithTestData()
 	return NewDoctorService(repo)
 }
 

@@ -56,6 +56,34 @@ func setupDoctorMemoryRepo() *doctorRepository {
 	}
 }
 
+func NewDoctorRepositoryWithTestData() doctor.Repository {
+	baseTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	return &doctorRepository{
+		doctors: []medical.Doctor{
+			{
+				ID:          uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
+				Name:        "Dr. John Smith",
+				SpecialtyID: uuid.MustParse("223e4567-e89b-12d3-a456-426614174000"),
+				PhoneNumber: "+1234567890",
+				AvatarURL:   "https://example.com/avatar1.jpg",
+				Description: "Experienced cardiologist",
+				CreatedAt:   baseTime.Add(-24 * time.Hour),
+				UpdatedAt:   baseTime.Add(-24 * time.Hour),
+			},
+			{
+				ID:          uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"),
+				Name:        "Dr. Jane Doe",
+				SpecialtyID: uuid.MustParse("223e4567-e89b-12d3-a456-426614174001"),
+				PhoneNumber: "+1234567891",
+				AvatarURL:   "https://example.com/avatar2.jpg",
+				Description: "Skilled neurologist",
+				CreatedAt:   baseTime.Add(-12 * time.Hour),
+				UpdatedAt:   baseTime.Add(-12 * time.Hour),
+			},
+		},
+	}
+}
+
 func TestDoctorMemoryRepository_ListOffset_Success(t *testing.T) {
 	repo := setupDoctorMemoryRepo()
 	ctx := context.Background()

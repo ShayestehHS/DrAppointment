@@ -22,7 +22,7 @@ import (
 type DoctorOffsetPageDTO = pagination.Result[ListItemDTO]
 
 func setupDoctorHandler() *Handler {
-	repo := memory.NewDoctorRepository()
+	repo := memory.NewDoctorRepositoryWithTestData()
 	service := medicalService.NewDoctorService(repo)
 	return NewHandler(service)
 }

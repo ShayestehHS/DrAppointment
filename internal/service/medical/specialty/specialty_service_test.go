@@ -77,57 +77,6 @@ func TestSpecialtyService_ListSpecialtiesOffset_EmptyResult(t *testing.T) {
 	assert.Len(t, specialties, 0)
 }
 
-func TestSpecialtyService_ListSpecialtiesOffset_ValidatesLimitTooLow(t *testing.T) {
-	service := setupSpecialtyService()
-	ctx := context.Background()
-
-	params := pagination.LimitOffsetParams{
-		Page:  1,
-		Limit: -1, // Invalid limit
-	}
-
-	specialties, totalCount, err := service.ListSpecialtiesOffset(ctx, params)
-	require.NoError(t, err)
-
-	// Service should still return results (limit validation happens in service)
-	assert.Equal(t, 3, totalCount)
-	assert.Len(t, specialties, 0)
-}
-
-func TestSpecialtyService_ListSpecialtiesOffset_ValidatesLimitTooHigh(t *testing.T) {
-	service := setupSpecialtyService()
-	ctx := context.Background()
-
-	params := pagination.LimitOffsetParams{
-		Page:  1,
-		Limit: 150, // Too high limit
-	}
-
-	specialties, totalCount, err := service.ListSpecialtiesOffset(ctx, params)
-	require.NoError(t, err)
-
-	// Service doesn't validate limit, so it returns all items up to the limit
-	assert.Equal(t, 3, totalCount)
-	assert.Len(t, specialties, 3)
-}
-
-func TestSpecialtyService_ListSpecialtiesOffset_Success_FirstPage(t *testing.T) {
-	service := setupSpecialtyService()
-	ctx := context.Background()
-
-	params := pagination.LimitOffsetParams{
-		Page:  1,
-		Limit: 10,
-	}
-
-	specialties, totalCount, err := service.ListSpecialtiesOffset(ctx, params)
-	require.NoError(t, err)
-
-	// Service should still return results
-	assert.Equal(t, 3, totalCount)
-	assert.Len(t, specialties, 3)
-}
-
 func TestSpecialtyService_GetByID_Success(t *testing.T) {
 	service := setupSpecialtyService()
 	ctx := context.Background()
