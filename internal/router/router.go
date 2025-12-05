@@ -4,9 +4,14 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shayesteh1hs/DrAppointment/internal/api/medical/doctor"
+	"github.com/shayesteh1hs/DrAppointment/internal/api/medical/specialty"
+	doctor2 "github.com/shayesteh1hs/DrAppointment/internal/service/medical/doctor"
+	medicalService "github.com/shayesteh1hs/DrAppointment/internal/service/medical/specialty"
 
 	"github.com/shayesteh1hs/DrAppointment/internal/middleware"
-	medical_router "github.com/shayesteh1hs/DrAppointment/internal/router/patient-panel"
+	doctorPostgres "github.com/shayesteh1hs/DrAppointment/internal/repository/medical/doctor/postgres"
+	specialtyPostgres "github.com/shayesteh1hs/DrAppointment/internal/repository/medical/specialty/postgres"
 )
 
 func SetupRouter(db *sql.DB) *gin.Engine {
@@ -27,8 +32,23 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		})
 	})
 
-	publicRoutes := api.Group("/public")
-	medical_router.SetupPatientPanelRoutes(publicRoutes, db)
+	// Setup medical group routes
+	medicalGroup := api.Group("/medical")
+	setupMedicalRoutes(medicalGroup, db)
 
 	return r
+}
+
+func setupMedicalRoutes(rg *gin.RouterGroup, db *sql.DB) {
+	// Setup doctor routes
+	doctorRepo := doctorPostgres.NewDoctorRepository(db)
+	doctorService := doctor2.NewDoctorService(doctorRepo)
+	doctorHandler := doctor.NewHandler(doctorService)
+	doctorHandler.RegisterRoutes(rg)
+
+	// Setup specialty routes
+	specialtyRepo := specialtyPostgres.NewSpecialtyRepository(db)
+	specialtyService := medicalService.NewSpecialtyService(specialtyRepo)
+	specialtyHandler := specialty.NewSpecialtyHandler(specialtyService)
+	specialtyHandler.RegisterRoutes(rg)
 }

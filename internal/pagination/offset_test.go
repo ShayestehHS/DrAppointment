@@ -10,14 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockEntity struct {
-	ID string
-}
-
-func (m mockEntity) GetId() string {
-	return m.ID
-}
-
 func TestLimitOffsetParams_Validate_ValidParams(t *testing.T) {
 	params := LimitOffsetParams{
 		Page:    1,
@@ -28,7 +20,6 @@ func TestLimitOffsetParams_Validate_ValidParams(t *testing.T) {
 	err := params.Validate()
 
 	assert.Nil(t, err)
-	assert.True(t, params.IsValidated())
 }
 
 func TestLimitOffsetParams_Validate_MissingBaseURL(t *testing.T) {
@@ -68,26 +59,7 @@ func TestLimitOffsetPaginator_Paginate_WithValidation(t *testing.T) {
 
 	// Check that the correct values are in the args
 	assert.Equal(t, params.Limit, args[0])
-	assert.Equal(t, paginator.getOffset(), args[1])
-}
-
-func TestLimitOffsetPaginator_Paginate_WithoutValidation(t *testing.T) {
-	params := LimitOffsetParams{
-		Page:    2,
-		Limit:   10,
-		BaseURL: "http://example.com/api",
-	}
-
-	// Do not validate the params
-
-	paginator := NewLimitOffsetPaginator[mockEntity](params)
-	sb := sqlbuilder.PostgreSQL.NewSelectBuilder()
-	sb.Select("*").From("test")
-
-	err := paginator.Paginate(sb)
-
-	assert.Error(t, err)
-	assert.Equal(t, "params should be validated before paginating", err.Error())
+	assert.Equal(t, params.GetOffset(), args[1])
 }
 
 func TestLimitOffsetPaginator_CreatePaginationResult_FirstPageWithMorePages(t *testing.T) {
@@ -258,12 +230,4 @@ func TestBuildURL_EmptyURL(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Empty(t, result)
-}
-
-func generateMockItems(count int) []mockEntity {
-	items := make([]mockEntity, count)
-	for i := 0; i < count; i++ {
-		items[i] = mockEntity{ID: strconv.Itoa(i)}
-	}
-	return items
 }

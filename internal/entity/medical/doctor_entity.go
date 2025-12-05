@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shayesteh1hs/DrAppointment/internal/entity"
 )
+
+var _ entity.ModelEntity = (*Doctor)(nil)
 
 type Doctor struct {
 	ID          uuid.UUID `json:"id" db:"id"`
@@ -17,7 +20,6 @@ type Doctor struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
-// GetId returns the ID as a string for pagination compatibility
-func (d Doctor) GetId() string {
+func (d Doctor) GetPK() string {
 	return d.ID.String()
 }
